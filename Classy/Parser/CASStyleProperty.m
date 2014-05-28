@@ -216,7 +216,7 @@
     UIEdgeInsets insets;
     BOOL hasInsets = [self transformValuesToUIEdgeInsets:&insets];
 
-    NSString *imageName = [self valueOfTokenType:CASTokenTypeString] ?: [self valueOfTokenType:CASTokenTypeRef];
+    NSString *imageName = [self valueOfTokenType:CASTokenTypeString] ?: ([self valueOfTokenType:CASTokenTypeNilLiteral] ? nil:[self valueOfTokenType:CASTokenTypeRef]);
     
     UIImage *imageValue = nil;
     NSRange schemeRange = [imageName rangeOfString:@"://"];
