@@ -650,7 +650,7 @@
 - (void)unscheduleUpdateForItem:(id<CASStyleableItem>)item {
     [self.scheduledItems removeObject:item];
 
-    if (self.scheduledItems.allObjects.count == 0) {
+    if (self.scheduledItems.count == 0) {
         [self.updateTimer invalidate];
         self.updateTimer = nil;
     }
