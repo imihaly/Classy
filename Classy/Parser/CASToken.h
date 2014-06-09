@@ -30,6 +30,7 @@ typedef NS_ENUM(NSInteger, CASTokenType) {
     CASTokenTypeOperator,
     CASTokenTypeSpace,
     CASTokenTypeSelector,
+    CASTokenTypeNilLiteral,
 };
 
 @interface CASToken : NSObject

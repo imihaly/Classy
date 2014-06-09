@@ -87,8 +87,11 @@ NSString * const CASParseFailingStringErrorKey = @"CASParseFailingStringErrorKey
         @(CASTokenTypeSpace)     : @[ CASRegex(@"^([ \\t]+)") ],
 
         // any character except `\n` | `{` | `,` | whitespace
-        @(CASTokenTypeSelector)  : @[ CASRegex(@"^.*?(?=\\/\\/|[ \\t,\\n{])") ]
-    };
+        @(CASTokenTypeSelector)  : @[ CASRegex(@"^.*?(?=\\/\\/|[ \\t,\\n{])") ],
+
+        // nil
+        @(CASTokenTypeNilLiteral)  : @[ CASRegex(@"^(nil)([ \\t]*)") ]
+	};
 
     return self;
 }
@@ -173,6 +176,7 @@ NSString * const CASParseFailingStringErrorKey = @"CASParseFailingStringErrorKey
         ?: self.string
         ?: self.unit
         ?: self.boolean
+		?: self.nilLiteral
         ?: self.ref
         ?: self.operation
         ?: self.space
@@ -400,6 +404,12 @@ NSString * const CASParseFailingStringErrorKey = @"CASParseFailingStringErrorKey
 
 - (CASToken *)selector {
     return [self testForTokenType:CASTokenTypeSelector transformValueBlock:^id(NSString *value, NSTextCheckingResult *match) {
+        return value;
+    }];
+}
+
+- (CASToken *)nilLiteral {
+    return [self testForTokenType:CASTokenTypeNilLiteral transformValueBlock:^id(NSString *value, NSTextCheckingResult *match) {
         return value;
     }];
 }

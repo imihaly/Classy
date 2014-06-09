@@ -62,6 +62,8 @@
             return @"space";
         case CASTokenTypeSelector:
             return @"selector";
+        case CASTokenTypeNilLiteral:
+            return @"nil";
     }
 }
 
