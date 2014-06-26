@@ -16,6 +16,8 @@
 #import "CASDeviceSelector.h"
 #import "NSString+CASAdditions.h"
 
+#import "BCASLexer.h"
+
 NSString * const CASParseFailingFilePathErrorKey = @"CASParseFailingFilePathErrorKey";
 NSInteger const CASParseErrorFileContents = 2;
 
@@ -34,29 +36,6 @@ NSInteger const CASParseErrorFileContents = 2;
 }
 
 + (CASParser *)parserFromFilePath:(NSString *)filePath variables:(NSDictionary *)variables error:(NSError **)error {
-    NSError *fileError = nil;
-    NSString *contents = [NSString stringWithContentsOfFile:filePath
-                                                   encoding:NSUTF8StringEncoding
-                                                      error:&fileError];
-    if (!contents || fileError) {
-        NSMutableDictionary *userInfo = @{
-            NSLocalizedDescriptionKey: @"Could not parse file",
-            NSLocalizedFailureReasonErrorKey: @"File does not exist or is empty",
-            CASParseFailingFilePathErrorKey : filePath ?: @""
-        }.mutableCopy;
-
-        if (fileError) {
-            [userInfo setObject:fileError forKey:NSUnderlyingErrorKey];
-        }
-
-        if (error) {
-            *error = [NSError errorWithDomain:CASParseErrorDomain code:CASParseErrorFileContents userInfo:userInfo];
-        }
-
-        return nil;
-    }
-
-    CASLog(@"Start parsing file \n%@", filePath);
     NSError *parseError = nil;
     CASParser *parser = CASParser.new;
     parser.filePath = filePath;
@@ -78,7 +57,7 @@ NSInteger const CASParseErrorFileContents = 2;
         }
         parser.styleVars[key] = [[CASStyleProperty alloc] initWithNameToken:nameToken valueTokens:tokens];
     }];
-    parser.styleNodes = [parser parseString:contents error:&parseError];
+    parser.styleNodes = [parser parseFile:filePath error:&parseError];
 
     if (parseError) {
         if (error) {
@@ -107,8 +86,40 @@ NSInteger const CASParseErrorFileContents = 2;
     return _importedFileNames;
 }
 
-- (NSArray *)parseString:(NSString *)string error:(NSError **)error {
-    self.lexer = [[CASLexer alloc] initWithString:string];
+- (NSArray *)parseFile:(NSString *)filePath error:(NSError **)error {
+    CASLog(@"Start parsing file \n%@", filePath);
+	
+	
+    NSError *fileError = nil;
+	
+	if([[filePath pathExtension] isEqualToString:@"bcas"]) {
+		NSData *data = [NSData dataWithContentsOfFile:filePath];
+		self.lexer = [[BCASLexer alloc] initWithData:data];
+	} else {
+		NSString *contents = [NSString stringWithContentsOfFile:filePath
+													   encoding:NSUTF8StringEncoding
+														  error:&fileError];
+		if (!contents || fileError) {
+			NSMutableDictionary *userInfo = @{
+											  NSLocalizedDescriptionKey: @"Could not parse file",
+											  NSLocalizedFailureReasonErrorKey: @"File does not exist or is empty",
+											  CASParseFailingFilePathErrorKey : filePath ?: @""
+											  }.mutableCopy;
+			
+			if (fileError) {
+				[userInfo setObject:fileError forKey:NSUnderlyingErrorKey];
+			}
+			
+			if (error) {
+				*error = [NSError errorWithDomain:CASParseErrorDomain code:CASParseErrorFileContents userInfo:userInfo];
+			}
+			
+			return nil;
+		}
+		self.lexer = [[CASLexer alloc] initWithString:contents];
+	}
+	
+	
     _importedFileNames = NSMutableSet.new;
 
     NSMutableArray *allStyleNodes = NSMutableArray.new;
