@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "CASStyleableItem.h"
 
+@class CASStyler;
 @interface CASStyleSelector : NSObject <NSCopying>
 
 /**
@@ -96,5 +97,7 @@
  *  @return a `NSString` value
  */
 - (NSString *)stringValue;
+
+- (BOOL)matchesClass:(Class)aClass;
 
 @end

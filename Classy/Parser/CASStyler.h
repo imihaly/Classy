@@ -10,6 +10,7 @@
 #import "CASObjectClassDescriptor.h"
 #import "CASStyleableItem.h"
 
+@class CASStyleProperty;
 @interface CASStyler : NSObject
 
 /**
@@ -64,5 +65,8 @@
  *  @param item CASStyleableItem that no longer needs updating
  */
 - (void)unscheduleUpdateForItem:(id<CASStyleableItem>)item;
+
+- (NSArray *)invocationsForClass:(Class)aClass styleProperty:(CASStyleProperty *)styleProperty keyPath:(NSString *)keypath;
+- (NSArray *)styleNodesMatchingClass:(Class)aClass;
 
 @end

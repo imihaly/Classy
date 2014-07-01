@@ -16,6 +16,7 @@
 #import "NSString+CASAdditions.h"
 #import "CASTextAttributes.h"
 #import "CASInvocation.h"
+#import "CASStyleClassUtilities.h"
 
 @interface CASStyler ()
 
@@ -25,6 +26,7 @@
 @property (nonatomic, strong) NSTimer *updateTimer;
 @property (nonatomic, strong) NSMutableArray *fileWatchers;
 @property (nonatomic, strong) NSMutableArray *invocationObjectArguments;
+@property (nonatomic, strong) NSMapTable *styleNodesLookupTable;
 
 @end
 
@@ -47,6 +49,7 @@
     self.objectClassDescriptorCache = NSMapTable.strongToStrongObjectsMapTable;
     self.scheduledItems = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
     self.fileWatchers = NSMutableArray.new;
+    self.styleNodesLookupTable = NSMapTable.strongToStrongObjectsMapTable;
     [self setupObjectClassDescriptors];
 
     return self;
@@ -58,8 +61,7 @@
         self.filePath = [[NSBundle mainBundle] pathForResource:@"stylesheet.cas" ofType:nil];
     }
     
-    // TODO style lookup table to improve speed.
-    for (CASStyleNode *styleNode in self.styleNodes) {
+    for (CASStyleNode *styleNode in [self styleNodesMatchingClass:item.class]) {
         if ([styleNode.styleSelector shouldSelectItem:item]) {
             // apply style nodes
             for (CASInvocation *invocation in styleNode.invocations) {
@@ -67,6 +69,21 @@
             }
         }
     }
+}
+
+- (NSArray *)styleNodesMatchingClass:(Class)aClass {
+	NSArray *stored = [self.styleNodesLookupTable objectForKey:aClass];
+	if(stored) return stored;
+
+	NSMutableArray *nodes = NSMutableArray.array;
+	for (CASStyleNode *styleNode in self.styleNodes) {
+		if([styleNode.styleSelector matchesClass:aClass]) {
+			[nodes addObject:styleNode];
+		}
+	}
+	
+	[self.styleNodesLookupTable setObject:nodes forKey:aClass];
+	return nodes;
 }
 
 - (void)setVariables:(NSDictionary *)variables {
@@ -144,15 +161,10 @@
     }];
 
     self.invocationObjectArguments = NSMutableArray.new;
+	
     // precompute values
     for (CASStyleNode *styleNode in self.styleNodes) {
-        NSMutableArray *invocations = NSMutableArray.new;
-        for (CASStyleProperty *styleProperty in styleNode.styleProperties) {
-            // TODO type checking and throw errors
-            NSArray *propertyInvocations = [self invocationsForClass:styleNode.styleSelector.objectClass styleProperty:styleProperty keyPath:nil];
-            [invocations addObjectsFromArray:propertyInvocations];
-        }
-        styleNode.invocations = invocations;
+		styleNode.styler = self;
     }
 }
 

@@ -11,7 +11,10 @@
 #import "CASStyleSelector.h"
 #import "CASDeviceSelector.h"
 
+@class CASStyler;
 @interface CASStyleNode : NSObject
+
+@property (nonatomic, weak) CASStyler *styler;
 
 /**
  *  NSInvocations to apply to appropriate view

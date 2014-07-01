@@ -9,6 +9,11 @@
 #import "CASStyleSelector.h"
 #import "UIView+CASAdditions.h"
 #import "NSString+CASAdditions.h"
+#import "CASStyleNode.h"
+
+@interface CASStyleSelector ()
+@property (nonatomic, strong) NSMapTable *matchLookupTable;
+@end
 
 @implementation CASStyleSelector
 
@@ -18,7 +23,9 @@
 
     self.shouldSelectSubclasses = NO;
     self.shouldSelectIndirectSuperview = YES;
+	self.matchLookupTable = NSMapTable.weakToStrongObjectsMapTable;
 
+	
     return self;
 }
 
@@ -71,15 +78,26 @@
 }
 
 - (BOOL)shouldSelectItem:(id<CASStyleableItem>)item {
-    if (![self matchesItem:item]) {
-        return NO;
+	return [self shouldSelectItem:item matchType:NO];
+}
+
+- (BOOL)shouldSelectItem:(id<CASStyleableItem>)item matchType:(BOOL)matchType {
+	if(!item) return NO;
+
+	id key = item;
+	id value = [self.matchLookupTable objectForKey:key];
+	if(value) return [value boolValue];
+	
+	BOOL ret = YES;
+	
+	if (![self matchesItem:item matchType:matchType]) {
+		ret = NO;
+	} else if (self.parentSelector) {
+        ret = [self.parentSelector matchesAncestorsOfItem:item traverse:self.shouldSelectIndirectSuperview];
     }
 
-    if (self.parentSelector) {
-        return [self.parentSelector matchesAncestorsOfItem:item traverse:self.shouldSelectIndirectSuperview];
-    }
-
-    return YES;
+	[self.matchLookupTable setObject:@(ret) forKey:key];
+    return ret;
 }
 
 - (NSString *)stringValue {
@@ -114,15 +132,15 @@
 
 - (BOOL)matchesAncestorsOfItem:(id<CASStyleableItem>)item traverse:(BOOL)traverse {
     id<CASStyleableItem> currentItem = item;
-
+	
     while (currentItem.cas_parent != nil || currentItem.cas_alternativeParent != nil) {
         id<CASStyleableItem> ancestor;
-        if ([self matchesItem:currentItem.cas_parent]) {
+        if ([self matchesItem:currentItem.cas_parent matchType:YES]) {
             ancestor = currentItem.cas_parent;
-        } else if ([self matchesItem:currentItem.cas_alternativeParent]) {
+        } else if ([self matchesItem:currentItem.cas_alternativeParent matchType:YES]) {
             ancestor = currentItem.cas_alternativeParent;
         }
-
+		
         if (ancestor) {
             if (!self.parentSelector) return YES;
             BOOL traverse = self.shouldSelectIndirectSuperview;
@@ -131,23 +149,27 @@
         if (!traverse) return NO;
         currentItem = currentItem.cas_parent;
     }
-
+	
     return NO;
 }
 
-- (BOOL)matchesItem:(id<CASStyleableItem>)item {
-    if (self.objectClass) {
-        if (self.shouldSelectSubclasses) {
-            if (![item isKindOfClass:self.objectClass]) return NO;
-        } else {
-            if (![item isMemberOfClass:self.objectClass]) return NO;
-        }
-    }
-    
+- (BOOL)matchesClass:(Class)aClass {
+	if (!self.objectClass) return YES;
+	if(aClass == self.objectClass) return YES;
+	return self.shouldSelectSubclasses && [aClass isSubclassOfClass:self.objectClass];
+}
+
+- (BOOL)matchesItem:(id<CASStyleableItem>)item matchType:(BOOL)matchType {
+	if (matchType && ![self matchesClass:item.class]) return NO;
+		
     if (self.styleClass.length && ![item cas_hasStyleClass:self.styleClass]) {
         return NO;
     }
     return YES;
+}
+
+- (NSString *)description {
+	return [super.description stringByAppendingFormat:@"(%@.%@)", self.objectClass, self.styleClass];
 }
 
 @end
