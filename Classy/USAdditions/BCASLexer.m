@@ -8,6 +8,8 @@
 
 #import "BCASLexer.h"
 #import "UIColor+CASAdditions.h"
+#import "FDSerialUnarchiver.h"
+
 
 @interface BCASLexer()
 
@@ -21,7 +23,7 @@
 - (instancetype)initWithData:(NSData *)data {
 	self = [super init];
 	if(self) {
-		self.tokens = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+		self.tokens = [FDSerialUnarchiver unarchiveObjectWithData:data];
 		self.cursorPosition = 0;
 	}
 	return self;
