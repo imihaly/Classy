@@ -113,6 +113,8 @@
     if ([_filePath isEqualToString:filePath]) return;
     _filePath = filePath;
 
+	self.styleNodesLookupTable = NSMapTable.strongToStrongObjectsMapTable;
+	
     CASParser *parser = [CASParser parserFromFilePath:filePath variables:self.variables error:error];
     NSArray *styleNodes = parser.styleNodes;
 
