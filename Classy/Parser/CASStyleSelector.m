@@ -11,10 +11,6 @@
 #import "NSString+CASAdditions.h"
 #import "CASStyleNode.h"
 
-@interface CASStyleSelector ()
-@property (nonatomic, strong) NSMapTable *matchLookupTable;
-@end
-
 @implementation CASStyleSelector
 
 - (id)init {
@@ -23,8 +19,6 @@
 
     self.shouldSelectSubclasses = NO;
     self.shouldSelectIndirectSuperview = YES;
-	self.matchLookupTable = NSMapTable.weakToStrongObjectsMapTable;
-
 	
     return self;
 }
@@ -84,10 +78,6 @@
 - (BOOL)shouldSelectItem:(id<CASStyleableItem>)item matchType:(BOOL)matchType {
 	if(!item) return NO;
 
-	id key = item;
-	id value = [self.matchLookupTable objectForKey:key];
-	if(value) return [value boolValue];
-	
 	BOOL ret = YES;
 	
 	if (![self matchesItem:item matchType:matchType]) {
@@ -96,7 +86,6 @@
         ret = [self.parentSelector matchesAncestorsOfItem:item traverse:self.shouldSelectIndirectSuperview];
     }
 
-	[self.matchLookupTable setObject:@(ret) forKey:key];
     return ret;
 }
 
